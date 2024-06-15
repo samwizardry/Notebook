@@ -1,4 +1,6 @@
-# Шаблон для создания проекта по канонам Clean Architecture
+# Clean Architecture
+
+Команды, советы, шаблоны для создания проекта по методологии Clean Architecture.
 
 ## Этапы создания решения
 
@@ -14,32 +16,30 @@ dotnet new globaljson --sdk-version $CA_SDKVersion --roll-forward latestFeature 
 dotnet new sln -o $CA_SlnPath -n $CA_SlnName
 ```
 
-Прописать TargetFramework для Directory.Build.props
+Прописать TargetFramework для Directory.Build.props.
 
 ```
 <TargetFramework>net6.0</TargetFramework>
 ```
 
-Нужные версии пакетов прописать в Directory.Packages.props
-Пример:
+Нужные версии пакетов прописать в Directory.Packages.props.
 
 ```
 <PackageVersion Include="Newtonsoft.Json" Version="13.0.1" />
 ```
 
-Скопировать ассеты в папку с проектом и добавить их в решение
+Скопировать ассеты в папку с проектом и добавить их в решение.
 
 ```
 copy assets/* $CA_SlnPath/
 ```
 
-Добавить в файл решения (.sln)
+Включить в файл решения (.sln) папку "Solution Items" и соответствующие ассеты.
 
 ```
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E2DA20AA-28D1-455C-BF50-C49A8F831633}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
 		Directory.Packages.props = Directory.Packages.props
 		global.json = global.json
@@ -47,7 +47,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 ```
 
-Создаем проекты решения
+Создаем проекты решения.
 
 ```
 dotnet new web -o $CA_SlnPath/src/Web --framework $CA_Framework
@@ -56,7 +56,7 @@ dotnet new classlib -o $CA_SlnPath/src/Infrastructure --framework $CA_Framework
 dotnet new classlib -o $CA_SlnPath/src/Domain --framework $CA_Framework
 ```
 
-Во всех проектах удаляем PropertyGroup, так как свойства перенесены в Directory.Build.props
+Во всех проектах удаляем PropertyGroup, так как свойства перенесены в Directory.Build.props.
 
 ```
 <PropertyGroup>
@@ -66,7 +66,7 @@ dotnet new classlib -o $CA_SlnPath/src/Domain --framework $CA_Framework
 </PropertyGroup>
 ```
 
-В каждый проект добавляем RootNamespace и AssemblyName
+В каждый проект добавляем RootNamespace и AssemblyName.
 
 ```
 <PropertyGroup>
@@ -75,7 +75,7 @@ dotnet new classlib -o $CA_SlnPath/src/Domain --framework $CA_Framework
 </PropertyGroup>
 ```
 
-Добавляем проекты в решение и связываем проекты ссылками
+Добавляем проекты в решение и связываем проекты ссылками.
 
 ```
 dotnet sln $CA_SlnPath/$CA_SlnName.sln add (ls -r $CA_SlnPath/src/*.csproj)
