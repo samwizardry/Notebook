@@ -1,6 +1,6 @@
 # Clean Architecture
 
-Команды, советы, шаблоны для создания проекта по методологии Clean Architecture.
+Порядок действия для создания проекта по Clean Architecture.
 
 ## Этапы создания решения
 
@@ -19,7 +19,7 @@ dotnet new sln -o $CA_SlnPath -n $CA_SlnName
 Прописать TargetFramework для Directory.Build.props.
 
 ```
-<TargetFramework>net6.0</TargetFramework>
+<TargetFramework>net8.0</TargetFramework>
 ```
 
 Нужные версии пакетов прописать в Directory.Packages.props.
@@ -96,3 +96,27 @@ dotnet add $CA_SlnPath/src/Application reference $CA_SlnPath/src/Domain
 * Domain.UnitTests
 
 Добавить референсы для тестов: ?
+
+## TODO: Разобрать это
+
+#### Domain
+Не использовать Data Annotations в domain сущностях, использовать Fluent API\
+Использовать Value Objects там где уместно\
+Использовать пользовательские исключения\
+Инициализировать все коллекции
+
+#### Application
+CQRS + MediatR\
+Fluent Validation\
+AutoMapper
+
+#### Infrastructure
+Независимость от базы данных\
+Fluent API (data annotations)\
+Там где возможно использовать conventions вместо configuration (меньше кода)\
+Никакой из слоев не зависит от Infrastructure
+
+#### Api (Web, UI и т.д.)
+В контроллерах не должно быть никакой логики\
+ViewModels\
+Open API (swagger)
