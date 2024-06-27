@@ -32,7 +32,10 @@ docker builder prune -af
 docker compose down
 ```
 
-### Источники
+### References
 
 - [Docker Tutorial for Beginners [FULL COURSE in 3 Hours]](https://www.youtube.com/watch?v=3c-iBn73dDE&ab_channel=TechWorldwithNana)
 - [Docker networking is CRAZY!! (you NEED to learn it)](https://www.youtube.com/watch?v=bKFMS5C4CG0&ab_channel=NetworkChuck)
+
+### Links
+- [docker.docs](https://docs.docker.com/guides/)
