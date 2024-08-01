@@ -17,6 +17,7 @@ WORKDIR /source
 COPY global.json .
 COPY Directory.Build.props .
 COPY Directory.Packages.props .
+COPY NuGet.config .
 COPY src/Web/. src/Web/
 COPY src/Core/. src/Core/
 
