@@ -100,3 +100,4 @@ app.UseOpenTelemetryPrometheusScrapingEndpoint();
 - [Logs](Logs.md)
 - [Baggage](Baggage.md)
 - [Span processors](SpanProcessors.md)
+- [Sampling](Sampling.md)
