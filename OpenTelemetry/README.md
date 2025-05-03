@@ -93,7 +93,7 @@ builder.Services.AddOpenTelemetry()
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 ```
 
-### Использование
+## Работа с OpenTelemetry
 
 - [Tracing](Tracing.md)
 - [Metrics](Metrics.md)
