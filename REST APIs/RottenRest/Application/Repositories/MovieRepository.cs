@@ -1,7 +1,5 @@
 using Dapper;
 
-using Microsoft.Extensions.Options;
-
 using RottenRest.Application.Data;
 using RottenRest.Application.Models;
 

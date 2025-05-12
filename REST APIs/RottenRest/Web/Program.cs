@@ -8,13 +8,13 @@ using Microsoft.IdentityModel.Tokens;
 using RottenRest.Application.Data;
 using RottenRest.Web;
 using RottenRest.Web.Auth;
+using RottenRest.Web.Endpoints;
 using RottenRest.Web.Health;
 using RottenRest.Web.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllers();
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>(DatabaseHealthCheck.Name);
 
@@ -85,8 +85,9 @@ builder.Services
         // "api-supported-versions" and "api-deprecated-versions"
         options.ReportApiVersions = true;
     })
-    .AddMvc()
     .AddApiExplorer();
+
+//builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 builder.Services.AddSwaggerGen(options =>
@@ -95,6 +96,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+app.UseApiVersionSet();
 
 if (app.Environment.IsDevelopment())
 {
@@ -125,7 +128,7 @@ app.UseAuthorization();
 app.UseOutputCache();
 
 app.UseMiddleware<ValidationMappingMiddleware>();
-app.MapControllers();
+app.MapApiEndpoints();
 
 {
     await app.Services.GetRequiredService<DbInitializer>().InitializeAsync();
