@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.ResponseCaching;
 
 using RottenRest.Application.Models;
 using RottenRest.Application.Services;
@@ -15,46 +16,49 @@ public static class MovieEndpointsExtensions
     public static IEndpointRouteBuilder MapMovieEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup(ApiEndpoints.Movies.Prefix)
-            .WithApiVersionSet(ApiVersioning.VersionSet)
-            .HasApiVersion(1.0d);
+            .WithApiVersionSet(ApiVersioning.VersionSet);
 
         group.MapPost(ApiEndpoints.Movies.Create, CreateMovieAsync)
             .WithName(nameof(CreateMovieAsync))
             .Produces<MovieResponse>(StatusCodes.Status201Created)
             .Produces<ValidationFailureResponse>(StatusCodes.Status400BadRequest)
-            .RequireAuthorization(AuthConstants.TrustedMemberPolicyName);
+            .RequireAuthorization(AuthConstants.TrustedMemberPolicyName)
+            .MapToApiVersion(1.0d);
 
         group.MapGet(ApiEndpoints.Movies.Get, GetMovieAsync)
             .WithName(nameof(GetMovieAsync))
             .Produces<MovieResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .MapToApiVersion(1.0d)
-            .CacheOutput("MovieCache");
+            .MapToApiVersion(1.0d);
+        //.CacheOutput("MovieCache");
 
         group.MapGet(ApiEndpoints.Movies.Get, GetMovieV2Async)
             .WithName(nameof(GetMovieV2Async))
             .Produces<MovieResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .MapToApiVersion(2.0d)
-            .CacheOutput("MovieCache");
+            .MapToApiVersion(2.0d);
+        //.CacheOutput("MovieCache");
 
         group.MapGet(ApiEndpoints.Movies.GetAll, GetAllMoviesAsync)
             .Produces<MovieResponse>(StatusCodes.Status200OK)
             .WithName(nameof(GetAllMoviesAsync))
-            .CacheOutput("MovieCache");
+            .MapToApiVersion(1.0d);
+        //.CacheOutput("MovieCache");
 
         group.MapPut(ApiEndpoints.Movies.Update, UpdateMovieAsync)
             .Produces<MovieResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
             .Produces<ValidationFailureResponse>(StatusCodes.Status400BadRequest)
             .WithName(nameof(UpdateMovieAsync))
-            .RequireAuthorization(AuthConstants.TrustedMemberPolicyName);
+            .RequireAuthorization(AuthConstants.TrustedMemberPolicyName)
+            .MapToApiVersion(1.0d);
 
         group.MapDelete(ApiEndpoints.Movies.Delete, DeleteMovieAsync)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .WithName(nameof(DeleteMovieAsync))
-            .RequireAuthorization(AuthConstants.AdminUserPolicyName);
+            .RequireAuthorization(AuthConstants.AdminUserPolicyName)
+            .MapToApiVersion(1.0d);
 
         return app;
     }
@@ -63,25 +67,24 @@ public static class MovieEndpointsExtensions
     public static async Task<IResult> CreateMovieAsync(
         CreateMovieRequest request,
         IMovieService movieService,
-        IOutputCacheStore outputCacheStore,
+        //IOutputCacheStore outputCacheStore,
         CancellationToken cancellationToken)
     {
         var movie = request.MapToMovie();
 
         await movieService.CreateAsync(movie, cancellationToken);
-        await outputCacheStore.EvictByTagAsync("movies", cancellationToken);
+        //await outputCacheStore.EvictByTagAsync("movies", cancellationToken);
 
         return TypedResults.CreatedAtRoute(movie.MapToResponse(), nameof(GetMovieAsync), new { idOrSlug = movie.Id });
     }
 
-    // QNA: ResponseCache в minimal api?
-    //[ResponseCache(Duration = 60, VaryByHeader = "Accept, Accept-Encoding", Location = ResponseCacheLocation.Any)]
     public static async Task<IResult> GetMovieAsync(
         string idOrSlug,
         IMovieService movieService,
         HttpContext context,
         CancellationToken cancellationToken)
     {
+        Console.WriteLine("Api version 1.0");
         var userId = context.GetUserId();
 
         Movie? movie = Guid.TryParse(idOrSlug, out var id)
@@ -92,17 +95,16 @@ public static class MovieEndpointsExtensions
             return Results.NotFound();
 
         var response = movie.MapToResponse();
-        // QNA: TypedResults vs Results
         return TypedResults.Ok(response);
     }
 
-    //[ResponseCache(Duration = 60, VaryByHeader = "Accept, Accept-Encoding", Location = ResponseCacheLocation.Any)]
     public static async Task<IResult> GetMovieV2Async(
         string idOrSlug,
         IMovieService movieService,
         HttpContext context,
         CancellationToken cancellationToken)
     {
+        Console.WriteLine("Api version 2.0");
         var userId = context.GetUserId();
 
         Movie? movie = Guid.TryParse(idOrSlug, out var id)
@@ -113,19 +115,20 @@ public static class MovieEndpointsExtensions
             return Results.NotFound();
 
         var response = movie.MapToResponse();
-        // QNA: TypedResults vs Results
         return TypedResults.Ok(response);
     }
 
-    //[ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any,
-    //    VaryByQueryKeys = ["title", "year", "sortBy", "page", "pageSize"], VaryByHeader = "Accept, Accept-Encoding")]
     public static async Task<IResult> GetAllMoviesAsync(
-        // QNA: AsParameters vs FromQuery
         [AsParameters] GetAllMoviesRequest request,
         IMovieService movieService,
         HttpContext context,
         CancellationToken cancellationToken)
     {
+        if (context.Features.Get<IResponseCachingFeature>() is IResponseCachingFeature feature)
+        {
+            feature.VaryByQueryKeys = ["title", "year", "sortBy", "page", "pageSize"];
+        }
+
         var userId = context.GetUserId();
 
         var options = request.MapToOptions()
@@ -144,7 +147,7 @@ public static class MovieEndpointsExtensions
         Guid id,
         UpdateMovieRequest request,
         IMovieService movieService,
-        IOutputCacheStore outputCacheStore,
+        //IOutputCacheStore outputCacheStore,
         HttpContext context,
         CancellationToken cancellationToken)
     {
@@ -156,7 +159,7 @@ public static class MovieEndpointsExtensions
             return Results.NotFound();
         }
 
-        await outputCacheStore.EvictByTagAsync("movies", cancellationToken);
+        //await outputCacheStore.EvictByTagAsync("movies", cancellationToken);
 
         return TypedResults.Ok(movie.MapToResponse());
     }
@@ -164,7 +167,7 @@ public static class MovieEndpointsExtensions
     public static async Task<IResult> DeleteMovieAsync(
         Guid id,
         IMovieService movieService,
-        IOutputCacheStore outputCacheStore,
+        //IOutputCacheStore outputCacheStore,
         HttpContext context,
         CancellationToken cancellationToken)
     {
@@ -176,7 +179,7 @@ public static class MovieEndpointsExtensions
             return Results.NotFound();
         }
 
-        await outputCacheStore.EvictByTagAsync("movies", cancellationToken);
+        //await outputCacheStore.EvictByTagAsync("movies", cancellationToken);
 
         return Results.NoContent();
     }

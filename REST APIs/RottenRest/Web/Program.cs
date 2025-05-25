@@ -1,8 +1,10 @@
 using System.Text;
 
 using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCaching;
 using Microsoft.IdentityModel.Tokens;
 
 using RottenRest.Application.Data;
@@ -19,15 +21,15 @@ builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>(DatabaseHealthCheck.Name);
 
 //builder.Services.AddResponseCaching();
-builder.Services.AddOutputCache(options =>
-{
-    options.AddBasePolicy(c => c.Cache());
-    options.AddPolicy("MovieCache", c => c.Cache()
-        .Expire(TimeSpan.FromSeconds(60))
-        .SetVaryByQuery(["title", "year", "orderBy", "page", "pageSize"])
-        .Tag("movies")
-    );
-});
+//builder.Services.AddOutputCache(options =>
+//{
+//    options.AddBasePolicy(c => c.Cache());
+//    options.AddPolicy("MovieCache", c => c.Cache()
+//        .Expire(TimeSpan.FromSeconds(60))
+//        .SetVaryByQuery(["title", "year", "orderBy", "page", "pageSize"])
+//        .Tag("movies")
+//    );
+//});
 
 builder.Services.AddScoped<ApiKeyAuthFilter>();
 
@@ -99,6 +101,41 @@ var app = builder.Build();
 
 app.UseApiVersionSet();
 
+app.MapHealthChecks("_health");
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// UseCors must be called before UseResponseCaching and before UseOutputCache
+//app.UseCors();
+
+//app.UseResponseCaching();
+//app.Use(async (context, next) =>
+//{
+//    context.Response.GetTypedHeaders().CacheControl =
+//        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+//        {
+//            Public = true,
+//            MaxAge = TimeSpan.FromSeconds(60)
+//        };
+
+//    context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
+//        new[] { "Accept-Encoding" };
+
+//    await next();
+//});
+
+//app.UseOutputCache();
+
+app.UseMiddleware<ValidationMappingMiddleware>();
+
+app.MapApiEndpoints();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -111,24 +148,6 @@ if (app.Environment.IsDevelopment())
         }
     });
 }
-
-app.MapHealthChecks("_health");
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-// UseCors should be called before UseResponseCaching and before UseOutputCache
-//app.UseCors();
-//app.UseResponseCaching();
-app.UseOutputCache();
-
-app.UseMiddleware<ValidationMappingMiddleware>();
-app.MapApiEndpoints();
 
 {
     await app.Services.GetRequiredService<DbInitializer>().InitializeAsync();
