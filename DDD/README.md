@@ -6,7 +6,9 @@
 
 ### Tactical Design
 
-Реализовать конкретного домена.
+Определение реализации модели. Моделирование домена.
+Инструменты которые позволяют релазиовать конкретную модель.
+Паттерны: Entities, Value Objects, Aggregates, Domain Services, Factories, Repositories, Domain Events
 
 ### Ubiquitous language
 
